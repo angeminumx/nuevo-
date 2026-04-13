@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teacher Badge Scan</title>
+</head>
+<body>
+    <h1>Teacher Badge Scan</h1>
+
+    <p><a href="{% url 'dashboard' %}">Back to Reception Dashboard</a></p>
+
+    <h2>Your Assigned Classrooms</h2>
+
+    {% if assigned_classrooms %}
+        <form method="post">
+            {% csrf_token %}
+
+            <label for="classroom">Classroom:</label>
+            <select name="classroom" id="classroom" required>
+                <option value="">Select classroom</option>
+                {% for classroom in assigned_classrooms %}
+                    <option value="{{ classroom.id }}"
+                        {% if selected_classroom and classroom.id == selected_classroom.id %}selected{% endif %}>
+                        {{ classroom.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <br><br>
+
+            <input
+                type="text"
+                name="badge_number"
+                placeholder="Scan student badge"
+                value="{{ scanned_value }}"
+                autofocus
+                required
+            >
+            <button type="submit">Submit Scan</button>
+        </form>
+    {% else %}
+        <p>You do not have any classroom access assigned.</p>
+    {% endif %}
+
+    <hr>
+
+    {% if result_message %}
+        <h2>{{ result_message }}</h2>
+
+        {% if matched_student %}
+            <p><strong>Name:</strong> {{ matched_student.first_name }} {{ matched_student.last_name }}</p>
+            <p><strong>Student ID:</strong> {{ matched_student.student_id }}</p>
+            <p><strong>Badge Number:</strong> {{ matched_student.badge_number }}</p>
+        {% endif %}
+    {% endif %}
+
+    <hr>
+
+    <h2>Your Recent Scans</h2>
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Time</th>
+            <th>Student</th>
+            <th>Badge Number</th>
+            <th>Classroom</th>
+            <th>Status</th>
+            <th>Message</th>
+        </tr>
+
+        {% for scan in recent_scans %}
+        <tr>
+            <td>{{ scan.scanned_at|date:"M d, Y h:i A" }}</td>
+            <td>{{ scan.student.first_name }} {{ scan.student.last_name }}</td>
+            <td>{{ scan.student.badge_number }}</td>
+            <td>
+                {% if scan.classroom %}
+                    {{ scan.classroom.name }}
+                {% else %}
+                    --
+                {% endif %}
+            </td>
+            <td>{{ scan.status }}</td>
+            <td>{{ scan.message }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No scans yet.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

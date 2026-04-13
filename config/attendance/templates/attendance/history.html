@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attendance History</title>
+</head>
+<body>
+    <h1>Attendance History</h1>
+
+    <p><a href="{% url 'dashboard' %}">Back to Dashboard</a></p>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Student</th>
+            <th>Student ID</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+            <th>Reason</th>
+            <th>Notes</th>
+            <th>Status</th>
+        </tr>
+
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.student.first_name }} {{ log.student.last_name }}</td>
+            <td>{{ log.student.student_id }}</td>
+            <td>{{ log.check_in_time|date:"M d, Y h:i A" }}</td>
+            <td>
+                {% if log.check_out_time %}
+                    {{ log.check_out_time|date:"M d, Y h:i A" }}
+                {% else %}
+                    --
+                {% endif %}
+            </td>
+            <td>{{ log.reason }}</td>
+            <td>{{ log.notes }}</td>
+            <td>
+                {% if log.check_out_time %}
+                    Checked Out
+                {% else %}
+                    Still In
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No attendance records found.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Home</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6fb;
+            color: #222;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 20px;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+        }
+
+        .subtext {
+            color: #666;
+            margin-bottom: 28px;
+        }
+
+        .classroom-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .classroom-card {
+            display: block;
+            text-decoration: none;
+            color: #222;
+            background: white;
+            border-radius: 18px;
+            padding: 28px 22px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .classroom-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+        }
+
+        .empty {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <h1>My Classrooms</h1>
+        <div class="subtext">Select a classroom to begin scanning students.</div>
+
+        {% if classrooms %}
+            <div class="classroom-grid">
+                {% for classroom in classrooms %}
+                    <a class="classroom-card" href="{% url 'teacher_classroom' classroom.id %}">
+                        {{ classroom.name }}
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty">
+                No classrooms are assigned to this account.
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
