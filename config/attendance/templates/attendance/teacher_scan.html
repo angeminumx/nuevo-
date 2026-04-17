@@ -1,91 +1,700 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Badge Scan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --orange:      #D95F1A;
+            --orange-dark: #B84C10;
+            --orange-light:#F5824A;
+            --gold:        #F2B400;
+            --gold-light:  #FDD96A;
+            --cream:       #FFF8EE;
+            --brown:       #5C3A1E;
+            --brown-light: #7A4F2D;
+            --spot:        #C47B2B;
+            --white:       #FFFFFF;
+            --gray-50:     #FAF7F2;
+            --gray-100:    #F0EBE2;
+            --gray-200:    #DDD4C4;
+            --gray-500:    #9A8878;
+            --gray-700:    #5C4F42;
+            --green:       #2A7A4B;
+            --green-light: #EAF5EF;
+            --red:         #9B2B2B;
+            --red-light:   #FAEAEA;
+            --radius-sm:   8px;
+            --radius-md:   14px;
+            --radius-lg:   20px;
+            --shadow:      0 2px 12px rgba(92,58,30,0.10);
+            --shadow-sm:   0 1px 4px rgba(92,58,30,0.08);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background: var(--cream);
+            color: var(--brown);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .site-header {
+            background: var(--orange);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+            box-shadow: 0 3px 0 var(--orange-dark);
+        }
+
+        .site-header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .site-header-brand .brand-dot {
+            width: 34px;
+            height: 34px;
+            background: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 15px;
+            color: var(--brown);
+            flex-shrink: 0;
+        }
+
+        .site-header-brand span {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 15px;
+            color: var(--white);
+            letter-spacing: 0.3px;
+        }
+
+        .header-link {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--gold-light);
+            background: rgba(255,255,255,0.15);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid rgba(255,255,255,0.25);
+            text-decoration: none;
+            transition: background 0.18s;
+        }
+
+        .header-link:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .page-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 28px 32px;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .page-title-row {
+            margin-bottom: 24px;
+        }
+
+        .page-title-row h1 {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 26px;
+            color: var(--brown);
+            margin: 0 0 2px 0;
+        }
+
+        .page-title-row p {
+            font-size: 14px;
+            color: var(--gray-500);
+            margin: 0;
+        }
+
+        .section-card {
+            background: var(--white);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: 22px 24px;
+            margin-bottom: 22px;
+            box-shadow: var(--shadow);
+        }
+
+        .section-card h2 {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 17px;
+            color: var(--brown);
+            margin: 0 0 16px 0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .search-box {
+            background: var(--white);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: 20px 22px;
+            box-shadow: var(--shadow);
+            margin-bottom: 22px;
+        }
+
+        .search-box h2 {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 15px;
+            color: var(--orange-dark);
+            margin: 0 0 12px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-form select,
+        .search-form input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 14px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 14px;
+            color: var(--brown);
+            background: var(--gray-50);
+            outline: none;
+            transition: border-color 0.18s, background 0.18s;
+        }
+
+        .search-form select:focus,
+        .search-form input[type="text"]:focus {
+            border-color: var(--orange);
+            background: var(--white);
+        }
+
+        .search-form input[type="text"]::placeholder {
+            color: var(--gray-500);
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--orange);
+            color: var(--white);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.18s, transform 0.1s;
+        }
+
+        button:hover {
+            background: var(--orange-dark);
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .student-card {
+            background: var(--white);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: 26px;
+            margin-bottom: 22px;
+            display: flex;
+            gap: 26px;
+            box-shadow: var(--shadow);
+            border-top: 5px solid var(--orange);
+        }
+
+        .student-photo img,
+        .student-photo .no-photo {
+            width: 170px;
+            height: 210px;
+            object-fit: cover;
+            border-radius: var(--radius-md);
+            border: 2px solid var(--gray-200);
+            background: var(--gray-100);
+        }
+
+        .student-photo .no-photo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-500);
+            font-size: 13px;
+        }
+
+        .student-details {
+            flex: 1;
+        }
+
+        .student-details h2 {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--brown);
+            margin: 0 0 16px 0;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            row-gap: 9px;
+            column-gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .detail-label {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            padding-top: 2px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: var(--brown);
+        }
+
+        .status-in {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--green-light);
+            color: var(--green);
+            font-weight: 700;
+            font-size: 13px;
+            padding: 4px 12px;
+            border-radius: 100px;
+            border: 1.5px solid #b5dfc7;
+        }
+
+        .status-in::before {
+            content: '';
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            background: var(--green);
+            border-radius: 50%;
+        }
+
+        .status-out {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--red-light);
+            color: var(--red);
+            font-weight: 700;
+            font-size: 13px;
+            padding: 4px 12px;
+            border-radius: 100px;
+            border: 1.5px solid #f0bfbf;
+        }
+
+        .status-out::before {
+            content: '';
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            background: var(--red);
+            border-radius: 50%;
+        }
+
+        .action-box {
+            margin-top: 18px;
+            padding: 18px;
+            background: var(--gray-50);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-md);
+        }
+
+        .action-box h3 {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 15px;
+            color: var(--brown);
+            margin: 0 0 6px 0;
+        }
+
+        .action-box p {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin: 0 0 12px 0;
+        }
+
+        .action-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .action-form input[type="text"] {
+            padding: 9px 13px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 13px;
+            color: var(--brown);
+            background: var(--white);
+            outline: none;
+            min-width: 160px;
+            transition: border-color 0.18s;
+        }
+
+        .action-form input[type="text"]:focus {
+            border-color: var(--orange);
+        }
+
+        details {
+            margin-top: 14px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        details summary {
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--orange-dark);
+            padding: 12px 16px;
+            background: var(--gray-50);
+            list-style: none;
+            user-select: none;
+        }
+
+        details summary:hover {
+            background: var(--gray-100);
+        }
+
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        details summary::before {
+            content: '▶ ';
+            font-size: 10px;
+        }
+
+        details[open] summary::before {
+            content: '▼ ';
+        }
+
+        details > div {
+            padding: 16px;
+            background: var(--white);
+            font-size: 13px;
+            color: var(--brown);
+        }
+
+        details > div h4 {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--orange-dark);
+            margin: 0 0 10px 0;
+        }
+
+        details > div p {
+            margin: 0 0 6px 0;
+        }
+
+        details > div hr {
+            border: none;
+            border-top: 1px solid var(--gray-100);
+            margin: 14px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+            font-size: 14px;
+        }
+
+        th {
+            background: var(--gray-50);
+            color: var(--gray-500);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 14px;
+            border-bottom: 2px solid var(--gray-200);
+            text-align: left;
+        }
+
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--gray-100);
+            color: var(--brown);
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: var(--gray-50);
+        }
+
+        .muted {
+            color: var(--gray-500);
+            font-style: italic;
+        }
+
+        .empty-row {
+            color: var(--gray-500);
+            font-style: italic;
+        }
+
+        @media (max-width: 1000px) {
+            .student-card {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .page-wrap {
+                padding: 16px;
+            }
+
+            .site-header {
+                padding: 0 16px;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Teacher Badge Scan</h1>
+<header class="site-header">
+    <div class="site-header-brand">
+        <div class="brand-dot">JL</div>
+        <span>Jacobs Ladder Discovery Academy</span>
+    </div>
+    <a class="header-link" href="{% url 'teacher_home' %}">Back to Classrooms →</a>
+</header>
 
-    <p><a href="{% url 'dashboard' %}">Back to Reception Dashboard</a></p>
+<div class="page-wrap">
+    <div class="page-title-row">
+        <h1>Teacher Badge Scan</h1>
+        <p>Scan a student badge or type a student ID to load their card and record a classroom scan.</p>
+    </div>
 
-    <h2>Your Assigned Classrooms</h2>
+    <div class="search-box">
+        <h2>Scan Student</h2>
 
-    {% if assigned_classrooms %}
-        <form method="post">
-            {% csrf_token %}
+        {% if assigned_classrooms %}
+            <form method="post" class="search-form">
+                {% csrf_token %}
 
-            <label for="classroom">Classroom:</label>
-            <select name="classroom" id="classroom" required>
-                <option value="">Select classroom</option>
-                {% for classroom in assigned_classrooms %}
-                    <option value="{{ classroom.id }}"
-                        {% if selected_classroom and classroom.id == selected_classroom.id %}selected{% endif %}>
-                        {{ classroom.name }}
-                    </option>
-                {% endfor %}
-            </select>
+                <select name="classroom" id="classroom" required>
+                    <option value="">Select classroom</option>
+                    {% for classroom in assigned_classrooms %}
+                        <option value="{{ classroom.id }}"
+                            {% if selected_classroom and classroom.id == selected_classroom.id %}selected{% endif %}>
+                            {{ classroom.name }}
+                        </option>
+                    {% endfor %}
+                </select>
 
-            <br><br>
+                <input
+                    type="text"
+                    name="query"
+                    placeholder="Scan badge number or type student ID"
+                    value="{{ scanned_value }}"
+                    autofocus
+                    required
+                >
 
-            <input
-                type="text"
-                name="badge_number"
-                placeholder="Scan student badge"
-                value="{{ scanned_value }}"
-                autofocus
-                required
-            >
-            <button type="submit">Submit Scan</button>
-        </form>
-    {% else %}
-        <p>You do not have any classroom access assigned.</p>
-    {% endif %}
-
-    <hr>
-
-    {% if result_message %}
-        <h2>{{ result_message }}</h2>
-
-        {% if matched_student %}
-            <p><strong>Name:</strong> {{ matched_student.first_name }} {{ matched_student.last_name }}</p>
-            <p><strong>Student ID:</strong> {{ matched_student.student_id }}</p>
-            <p><strong>Badge Number:</strong> {{ matched_student.badge_number }}</p>
+                <button type="submit">Find / Scan Student</button>
+            </form>
+        {% else %}
+            <div class="section-card" style="margin-bottom:0;">
+                <p style="margin:0;">You do not have any classroom access assigned.</p>
+            </div>
         {% endif %}
+    </div>
+
+    {% if scanned_value and not matched_student %}
+        <div class="section-card">
+            <h2>No Match Found</h2>
+            <p style="margin:0; font-size:14px;">
+                No student matched: <strong>{{ scanned_value }}</strong>
+            </p>
+            {% if result_message %}
+                <p style="margin:10px 0 0 0; font-size:14px; color:var(--gray-500);">{{ result_message }}</p>
+            {% endif %}
+        </div>
     {% endif %}
 
-    <hr>
-
-    <h2>Your Recent Scans</h2>
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>Time</th>
-            <th>Student</th>
-            <th>Badge Number</th>
-            <th>Classroom</th>
-            <th>Status</th>
-            <th>Message</th>
-        </tr>
-
-        {% for scan in recent_scans %}
-        <tr>
-            <td>{{ scan.scanned_at|date:"M d, Y h:i A" }}</td>
-            <td>{{ scan.student.first_name }} {{ scan.student.last_name }}</td>
-            <td>{{ scan.student.badge_number }}</td>
-            <td>
-                {% if scan.classroom %}
-                    {{ scan.classroom.name }}
+    {% if matched_student %}
+        <div class="student-card">
+            <div class="student-photo">
+                {% if matched_student.photo %}
+                    <img src="{{ matched_student.photo.url }}" alt="{{ matched_student.first_name }} {{ matched_student.last_name }}">
                 {% else %}
-                    --
+                    <div class="no-photo">No Photo</div>
                 {% endif %}
-            </td>
-            <td>{{ scan.status }}</td>
-            <td>{{ scan.message }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="6">No scans yet.</td>
-        </tr>
-        {% endfor %}
-    </table>
+            </div>
+
+            <div class="student-details">
+                <h2>{{ matched_student.first_name }} {{ matched_student.last_name }}</h2>
+
+                <div class="detail-grid">
+                    <div class="detail-label">Student ID</div>
+                    <div class="detail-value">{{ matched_student.student_id|default:"—" }}</div>
+
+                    <div class="detail-label">Badge Number</div>
+                    <div class="detail-value">{{ matched_student.badge_number|default:"—" }}</div>
+
+                    <div class="detail-label">Grade</div>
+                    <div class="detail-value">{{ matched_student.grade|default:"—" }}</div>
+
+                    <div class="detail-label">Homeroom</div>
+                    <div class="detail-value">{{ matched_student.homeroom|default:"—" }}</div>
+
+                    <div class="detail-label">Selected Classroom</div>
+                    <div class="detail-value">
+                        {% if selected_classroom %}
+                            {{ selected_classroom.name }}
+                        {% else %}
+                            <span class="muted">No classroom selected</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="detail-label">Scan Result</div>
+                    <div class="detail-value">
+                        {% if result_message %}
+                            <span class="status-in">{{ result_message }}</span>
+                        {% else %}
+                            <span class="status-in">Student matched</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <details>
+                    <summary>More information</summary>
+                    <div>
+                        <h4>Parent / Guardian Contact</h4>
+                        <p><strong>Parent 1:</strong> {{ matched_student.parent1_name|default:"-" }}</p>
+                        <p><strong>Email:</strong> {{ matched_student.parent1_email|default:"-" }}</p>
+                        <p><strong>Phone:</strong> {{ matched_student.parent1_phone|default:"-" }}</p>
+                        <hr>
+                        <p><strong>Parent 2:</strong> {{ matched_student.parent2_name|default:"-" }}</p>
+                        <p><strong>Email:</strong> {{ matched_student.parent2_email|default:"-" }}</p>
+                        <p><strong>Phone:</strong> {{ matched_student.parent2_phone|default:"-" }}</p>
+                        <hr>
+                        <h4>Medical / Directive Notes</h4>
+                        <p><strong>Medical Notes:</strong> {{ matched_student.medical_notes|default:"No medical notes on file." }}</p>
+                        <p><strong>Directives:</strong> {{ matched_student.directives|default:"No directives on file." }}</p>
+                    </div>
+                </details>
+
+                <div class="action-box">
+                    <h3>Scan Summary</h3>
+                    <p>
+                        This page does not check the student into reception. It records the classroom scan for the selected teacher classroom.
+                    </p>
+
+                    <form method="post" class="action-form">
+                        {% csrf_token %}
+
+                        <select name="classroom" required>
+                            <option value="">Select classroom</option>
+                            {% for classroom in assigned_classrooms %}
+                                <option value="{{ classroom.id }}"
+                                    {% if selected_classroom and classroom.id == selected_classroom.id %}selected{% endif %}>
+                                    {{ classroom.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <input type="text" name="query" value="{{ matched_student.badge_number|default:matched_student.student_id }}" readonly>
+                        <button type="submit">Scan Again</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="section-card">
+        <h2>Your Recent Scans</h2>
+        <table>
+            <tr>
+                <th>Time</th>
+                <th>Student</th>
+                <th>Badge Number</th>
+                <th>Classroom</th>
+                <th>Status</th>
+                <th>Message</th>
+            </tr>
+
+            {% for scan in recent_scans %}
+            <tr>
+                <td>{{ scan.scanned_at|date:"M d, Y h:i A" }}</td>
+                <td>{{ scan.student.first_name }} {{ scan.student.last_name }}</td>
+                <td>{{ scan.student.badge_number }}</td>
+                <td>
+                    {% if scan.classroom %}
+                        {{ scan.classroom.name }}
+                    {% else %}
+                        --
+                    {% endif %}
+                </td>
+                <td>{{ scan.status }}</td>
+                <td>{{ scan.message }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="empty-row">No scans yet.</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
 </body>
 </html>
