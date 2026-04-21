@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receptionist SMS Opt-In</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --orange: #D95F1A;
+            --orange-dark: #B84C10;
+            --gold: #F2B400;
+            --cream: #FFF8EE;
+            --brown: #5C3A1E;
+            --white: #FFFFFF;
+            --gray-50: #FAF7F2;
+            --gray-100: #F0EBE2;
+            --gray-200: #DDD4C4;
+            --gray-500: #9A8878;
+            --green: #2A7A4B;
+            --green-light: #EAF5EF;
+            --red: #9B2B2B;
+            --red-light: #FAEAEA;
+            --blue: #2F5DA8;
+            --blue-light: #EEF4FF;
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --shadow: 0 2px 12px rgba(92,58,30,0.10);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: 'Nunito Sans', sans-serif;
+            background: var(--cream);
+            color: var(--brown);
+        }
+
+        .site-header {
+            background: var(--orange);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+            box-shadow: 0 3px 0 var(--orange-dark);
+        }
+
+        .site-header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-dot {
+            width: 34px;
+            height: 34px;
+            background: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 15px;
+            color: var(--brown);
+        }
+
+        .site-header-brand span {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 15px;
+            color: var(--white);
+        }
+
+        .header-link {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            color: #FFF3D0;
+            background: rgba(255,255,255,0.15);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(255,255,255,0.25);
+            text-decoration: none;
+        }
+
+        .page-wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 28px 32px;
+        }
+
+        .title-row {
+            margin-bottom: 22px;
+        }
+
+        .title-row h1 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0 0 4px 0;
+        }
+
+        .title-row p {
+            margin: 0;
+            color: var(--gray-500);
+            font-size: 14px;
+        }
+
+        .card {
+            background: var(--white);
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            padding: 22px 24px;
+            margin-bottom: 22px;
+        }
+
+        .card h2 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 17px;
+            font-weight: 800;
+            margin: 0 0 14px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .search-form,
+        .optin-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            background: var(--gray-50);
+            font-size: 14px;
+            color: var(--brown);
+            outline: none;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: var(--orange);
+            background: var(--white);
+        }
+
+        .search-form input[type="text"] {
+            flex: 1;
+            min-width: 260px;
+        }
+
+        button {
+            padding: 11px 18px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--orange);
+            color: var(--white);
+            font-family: 'Nunito', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--orange-dark);
+        }
+
+        .student-grid {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 14px 18px;
+            margin-top: 10px;
+        }
+
+        .label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .value {
+            font-size: 14px;
+        }
+
+        .status-pill {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .status-on {
+            background: var(--green-light);
+            color: var(--green);
+            border: 1px solid #b5dfc7;
+        }
+
+        .status-off {
+            background: var(--red-light);
+            color: var(--red);
+            border: 1px solid #efc1c1;
+        }
+
+        .status-info {
+            background: var(--blue-light);
+            color: var(--blue);
+            border: 1px solid #c6d8ff;
+        }
+
+        .checkbox-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin: 8px 0;
+        }
+
+        .checkbox-row label {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .muted {
+            color: var(--gray-500);
+            font-style: italic;
+        }
+
+        .full-width {
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        th {
+            background: var(--gray-50);
+            color: var(--gray-500);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 12px;
+            border-bottom: 2px solid var(--gray-200);
+            text-align: left;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--gray-100);
+            vertical-align: top;
+        }
+
+        @media (max-width: 700px) {
+            .site-header {
+                padding: 0 16px;
+            }
+
+            .page-wrap {
+                padding: 16px;
+            }
+
+            .student-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .checkbox-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+<header class="site-header">
+    <div class="site-header-brand">
+        <div class="brand-dot">JL</div>
+        <span>Jacobs Ladder Discovery Academy</span>
+    </div>
+    <a class="header-link" href="{% url 'dashboard' %}">Back to Reception →</a>
+</header>
+
+<div class="page-wrap">
+    <div class="title-row">
+        <h1>Receptionist SMS Opt-In</h1>
+        <p>Search for a student, manage parent text opt-in, and review morning SMS status.</p>
+    </div>
+
+    <div class="card">
+        <h2>Find Student</h2>
+        <form method="get" class="search-form">
+            <input
+                type="text"
+                name="q"
+                placeholder="Student ID, badge number, first name, or last name"
+                value="{{ query }}"
+                autofocus
+            >
+            <button type="submit">Search</button>
+        </form>
+    </div>
+
+    {% if query and not matched_student %}
+        <div class="card">
+            <h2>No Student Found</h2>
+            <p class="muted">No active student matched “{{ query }}”.</p>
+        </div>
+    {% endif %}
+
+    {% if matched_student %}
+        <div class="card">
+            <h2>Student</h2>
+            <div class="student-grid">
+                <div class="label">Name</div>
+                <div class="value">{{ matched_student.first_name }} {{ matched_student.last_name }}</div>
+
+                <div class="label">Student ID</div>
+                <div class="value">{{ matched_student.student_id|default:"—" }}</div>
+
+                <div class="label">Badge Number</div>
+                <div class="value">{{ matched_student.badge_number|default:"—" }}</div>
+
+                <div class="label">Grade</div>
+                <div class="value">{{ matched_student.grade|default:"—" }}</div>
+
+                <div class="label">Homeroom</div>
+                <div class="value">{{ matched_student.homeroom|default:"—" }}</div>
+
+                <div class="label">Current Status</div>
+                <div class="value">
+                    {% if sms_record and sms_record.opted_in and sms_record.is_active %}
+                        <span class="status-pill status-on">Opted In</span>
+                    {% else %}
+                        <span class="status-pill status-off">Not Opted In</span>
+                    {% endif %}
+                </div>
+
+                <div class="label">Consent Timestamp</div>
+                <div class="value">
+                    {% if sms_record and sms_record.consent_timestamp %}
+                        {{ sms_record.consent_timestamp|date:"M d, Y h:i A" }}
+                    {% else %}
+                        <span class="muted">No consent timestamp recorded</span>
+                    {% endif %}
+                </div>
+
+                <div class="label">Morning SMS Today</div>
+                <div class="value">
+                    {% if today_morning_log %}
+                        {% if today_morning_log.status == "sent" %}
+                            <span class="status-pill status-on">Sent</span>
+                        {% elif today_morning_log.status == "failed" %}
+                            <span class="status-pill status-off">Failed</span>
+                        {% else %}
+                            <span class="status-pill status-info">{{ today_morning_log.status|title }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="muted">No morning SMS sent today</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Update SMS Settings</h2>
+            <form method="post" class="optin-form">
+                {% csrf_token %}
+                <input type="hidden" name="student_id" value="{{ matched_student.id }}">
+
+                <div class="full-width">
+                    <label class="label" for="phone_number">Phone Number</label>
+                    <input
+                        type="text"
+                        id="phone_number"
+                        name="phone_number"
+                        placeholder="Enter preferred parent phone number"
+                        value="{% if sms_record %}{{ sms_record.phone_number }}{% else %}{% if matched_student.parent1_phone %}{{ matched_student.parent1_phone }}{% endif %}{% endif %}"
+                    >
+                </div>
+
+                <div class="full-width checkbox-row">
+                    <label>
+                        <input type="checkbox" name="opted_in" {% if sms_record and sms_record.opted_in %}checked{% endif %}>
+                        Parent has opted in to SMS
+                    </label>
+
+                    <label>
+                        <input type="checkbox" name="is_active" {% if sms_record and sms_record.is_active %}checked{% endif %} {% if not sms_record %}checked{% endif %}>
+                        SMS record is active
+                    </label>
+                </div>
+
+                <div class="full-width">
+                    <label class="label" for="notes">Notes</label>
+                    <textarea
+                        id="notes"
+                        name="notes"
+                        placeholder="Optional notes about parent consent or messaging preferences"
+                    >{% if sms_record %}{{ sms_record.notes }}{% endif %}</textarea>
+                </div>
+
+                <button type="submit">Save SMS Settings</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Active Message Templates</h2>
+            {% if active_templates %}
+                <table>
+                    <tr>
+                        <th>Type</th>
+                        <th>Name</th>
+                        <th>Body</th>
+                    </tr>
+                    {% for template in active_templates %}
+                    <tr>
+                        <td>{{ template.get_message_type_display }}</td>
+                        <td>{{ template.name }}</td>
+                        <td>{{ template.body_template }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% else %}
+                <p class="muted">No active SMS templates configured yet.</p>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h2>Recent SMS Logs</h2>
+            {% if recent_sms_logs %}
+                <table>
+                    <tr>
+                        <th>Created</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Phone</th>
+                        <th>Message</th>
+                    </tr>
+                    {% for log in recent_sms_logs %}
+                    <tr>
+                        <td>{{ log.created_at|date:"M d, Y h:i A" }}</td>
+                        <td>{{ log.get_message_type_display }}</td>
+                        <td>{{ log.status|title }}</td>
+                        <td>{{ log.phone_number }}</td>
+                        <td>{{ log.message_body }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% else %}
+                <p class="muted">No SMS logs for this student yet.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+</body>
+</html>

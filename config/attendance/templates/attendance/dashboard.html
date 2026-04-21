@@ -667,7 +667,11 @@
         <div class="brand-dot">JL</div>
         <span>Jacobs Ladder Discovery Academy</span>
     </div>
-    <a class="header-link" href="{% url 'history' %}">Today's Attendance History →</a>
+    <div style="display:flex; gap:10px; align-items:center;">
+        <a class="header-link" href="{% url 'receptionist_messages' %}">Send Teacher Message →</a>
+        <a class="header-link" href="{% url 'receptionist_sms_optin' %}">SMS Opt-In →</a>
+        <a class="header-link" href="{% url 'history' %}">Today's Attendance History →</a>
+    </div>
 </header>
 
 <div class="page-wrap">
@@ -810,7 +814,7 @@
                     <th>Grade</th>
                     <th>Homeroom</th>
                     <th>Current Classroom</th>
-                    <th>Status</th>
+                    <th>Status</th>F
                     <th>Action</th>
                 </tr>
                 {% for student in name_results %}

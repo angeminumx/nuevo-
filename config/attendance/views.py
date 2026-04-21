@@ -8,6 +8,9 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.contrib.auth.models import User
+from django.conf import settings
+from twilio.rest import Client
 
 from .models import (
     AttendanceLog,
@@ -16,6 +19,10 @@ from .models import (
     TeacherClassroomAccess,
     TeacherScanLog,
     PERIOD_CHOICES,
+    StaffMessage,
+    SMSOptIn,
+    SMSMessageLog,
+    MessageTemplate,
 )
 from students.models import Student
 
@@ -50,6 +57,104 @@ def is_receptionist(user):
 
 def is_teacher(user):
     return user.is_authenticated and user.groups.filter(name="Teacher").exists()
+
+
+def render_sms_template(template_obj, student):
+    today = datetime.date.today()
+    quote = QUOTES[today.toordinal() % len(QUOTES)]
+
+    first_name = student.first_name or ""
+    last_name = student.last_name or ""
+    student_name = f"{first_name} {last_name}".strip()
+
+    return template_obj.body_template.format(
+        student_name=student_name,
+        first_name=first_name,
+        last_name=last_name,
+        quote=quote,
+    )
+
+
+def send_sms_message(phone_number, body):
+    if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN or not settings.TWILIO_PHONE_NUMBER:
+        return {
+            "success": False,
+            "provider_message_id": "",
+            "error": "Twilio credentials are missing.",
+        }
+
+    try:
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        message = client.messages.create(
+            body=body,
+            from_=settings.TWILIO_PHONE_NUMBER,
+            to=phone_number,
+        )
+        return {
+            "success": True,
+            "provider_message_id": message.sid,
+            "error": "",
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "provider_message_id": "",
+            "error": str(e),
+        }
+
+
+def send_morning_checkin_sms(student):
+    sms_optin = SMSOptIn.objects.filter(
+        student=student,
+        opted_in=True,
+        is_active=True
+    ).first()
+
+    if not sms_optin or not sms_optin.phone_number:
+        return
+
+    today = datetime.date.today()
+
+    already_sent = SMSMessageLog.objects.filter(
+        student=student,
+        message_type="morning",
+        created_at__date=today,
+        status="sent",
+    ).exists()
+
+    if already_sent:
+        return
+
+    template_obj = MessageTemplate.objects.filter(
+        message_type="morning",
+        is_active=True
+    ).first()
+
+    if not template_obj:
+        return
+
+    message_body = render_sms_template(template_obj, student)
+
+    log = SMSMessageLog.objects.create(
+        student=student,
+        phone_number=sms_optin.phone_number,
+        message_type="morning",
+        message_body=message_body,
+        status="pending",
+    )
+
+    result = send_sms_message(sms_optin.phone_number, message_body)
+
+    if result.get("success"):
+        log.status = "sent"
+        log.sent_at = timezone.now()
+        log.provider_message_id = result.get("provider_message_id", "")
+        log.error_message = ""
+    else:
+        log.status = "failed"
+        log.error_message = result.get("error", "Unknown SMS error")
+
+    log.save()
 
 
 @login_required
@@ -170,6 +275,7 @@ def check_in(request, student_id):
             reason=reason,
             notes=notes
         )
+        send_morning_checkin_sms(student)
 
     return redirect("dashboard")
 
@@ -243,7 +349,6 @@ def end_day(request):
     if not session_start:
         return redirect("dashboard")
 
-    # Close all currently open receptionist logs
     open_logs = AttendanceLog.objects.filter(
         check_out_time__isnull=True
     ).select_related("student")
@@ -261,13 +366,11 @@ def end_day(request):
 
         log.save()
 
-    # ONLY save receptionist logs created during this day session
     receptionist_logs = AttendanceLog.objects.filter(
         check_in_time__gte=session_start,
         check_in_time__lte=session_end,
     ).select_related("student").order_by("check_in_time")
 
-    # ONLY save teacher scans created during this day session
     teacher_logs = TeacherScanLog.objects.select_related(
         "student", "classroom", "scanned_by"
     ).filter(
@@ -327,7 +430,6 @@ def end_day(request):
                 log.scanned_by.username if log.scanned_by else "",
             ])
 
-    # Reset teacher interface for next day after saving report
     TeacherScanLog.objects.filter(scan_date=today).delete()
 
     response = HttpResponse(content_type="text/csv")
@@ -471,6 +573,175 @@ def teacher_scan(request, classroom_id):
         pass
 
     return redirect(f"/teacher/classroom/{classroom.pk}/?period={period}")
+
+
+@login_required
+@user_passes_test(is_receptionist)
+def receptionist_messages(request):
+    teacher_users = User.objects.filter(groups__name="Teacher").distinct().order_by("username")
+
+    if request.method == "POST":
+        recipient_id = request.POST.get("recipient_user")
+        body = request.POST.get("body", "").strip()
+        is_urgent = request.POST.get("is_urgent") == "on"
+
+        if recipient_id and body:
+            recipient = get_object_or_404(User, id=recipient_id)
+            StaffMessage.objects.create(
+                sender=request.user,
+                recipient_user=recipient,
+                recipient_role="teacher",
+                body=body,
+                is_urgent=is_urgent,
+            )
+        return redirect("receptionist_messages")
+
+    inbox_messages = StaffMessage.objects.select_related(
+        "sender", "recipient_user", "classroom", "student"
+    ).filter(
+        Q(recipient_user=request.user) | Q(recipient_role="receptionist")
+    ).order_by("-created_at")
+
+    unread_messages = inbox_messages.filter(read_at__isnull=True)
+    unread_messages.update(read_at=timezone.now())
+
+    sent_messages = StaffMessage.objects.select_related(
+        "recipient_user"
+    ).filter(
+        sender=request.user
+    ).order_by("-created_at")[:20]
+
+    context = {
+        "teacher_users": teacher_users,
+        "inbox_messages": inbox_messages,
+        "sent_messages": sent_messages,
+    }
+    return render(request, "attendance/receptionist_messages.html", context)
+
+
+@login_required
+@user_passes_test(is_teacher)
+def teacher_messages(request):
+    receptionist_users = User.objects.filter(groups__name="Receptionist").distinct().order_by("username")
+
+    if request.method == "POST":
+        recipient_id = request.POST.get("recipient_user")
+        body = request.POST.get("body", "").strip()
+        is_urgent = request.POST.get("is_urgent") == "on"
+
+        if recipient_id and body:
+            recipient = get_object_or_404(User, id=recipient_id)
+            StaffMessage.objects.create(
+                sender=request.user,
+                recipient_user=recipient,
+                recipient_role="receptionist",
+                body=body,
+                is_urgent=is_urgent,
+            )
+        return redirect("teacher_messages")
+
+    inbox_messages = StaffMessage.objects.select_related(
+        "sender", "recipient_user", "classroom", "student"
+    ).filter(
+        recipient_user=request.user
+    ).order_by("-created_at")
+
+    unread_messages = inbox_messages.filter(read_at__isnull=True)
+    unread_messages.update(read_at=timezone.now())
+
+    sent_messages = StaffMessage.objects.select_related(
+        "recipient_user"
+    ).filter(
+        sender=request.user
+    ).order_by("-created_at")[:20]
+
+    context = {
+        "receptionist_users": receptionist_users,
+        "inbox_messages": inbox_messages,
+        "sent_messages": sent_messages,
+    }
+    return render(request, "attendance/teacher_messages.html", context)
+
+
+@login_required
+@user_passes_test(is_receptionist)
+def receptionist_sms_optin(request):
+    query = request.GET.get("q", "").strip()
+    matched_student = None
+    sms_record = None
+    recent_sms_logs = []
+    today_morning_log = None
+    active_templates = []
+
+    if query:
+        matched_student = Student.objects.filter(
+            active=True
+        ).filter(
+            Q(student_id__iexact=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(badge_number__iexact=query)
+        ).order_by("last_name", "first_name").first()
+
+        if matched_student:
+            sms_record = SMSOptIn.objects.filter(student=matched_student).first()
+
+            recent_sms_logs = SMSMessageLog.objects.filter(
+                student=matched_student
+            ).order_by("-created_at")[:10]
+
+            today_morning_log = SMSMessageLog.objects.filter(
+                student=matched_student,
+                message_type="morning",
+                created_at__date=datetime.date.today()
+            ).order_by("-created_at").first()
+
+    if request.method == "POST":
+        student_id = request.POST.get("student_id")
+        phone_number = request.POST.get("phone_number", "").strip()
+        opted_in = request.POST.get("opted_in") == "on"
+        is_active = request.POST.get("is_active") == "on"
+        notes = request.POST.get("notes", "").strip()
+
+        student = get_object_or_404(Student, id=student_id)
+
+        sms_record, created = SMSOptIn.objects.get_or_create(
+            student=student,
+            defaults={
+                "phone_number": phone_number,
+                "opted_in": opted_in,
+                "is_active": is_active,
+                "notes": notes,
+                "consent_timestamp": timezone.now() if opted_in else None,
+            }
+        )
+
+        if not created:
+            sms_record.phone_number = phone_number
+            sms_record.opted_in = opted_in
+            sms_record.is_active = is_active
+            sms_record.notes = notes
+            if opted_in and sms_record.consent_timestamp is None:
+                sms_record.consent_timestamp = timezone.now()
+            if not opted_in:
+                sms_record.consent_timestamp = None
+            sms_record.save()
+
+        return redirect(f"/sms-optin/?q={student.student_id}")
+
+    active_templates = MessageTemplate.objects.filter(
+        is_active=True
+    ).order_by("message_type")
+
+    context = {
+        "query": query,
+        "matched_student": matched_student,
+        "sms_record": sms_record,
+        "recent_sms_logs": recent_sms_logs,
+        "today_morning_log": today_morning_log,
+        "active_templates": active_templates,
+    }
+    return render(request, "attendance/receptionist_sms_optin.html", context)
 
 
 @login_required
