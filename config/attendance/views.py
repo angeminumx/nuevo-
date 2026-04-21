@@ -1,6 +1,8 @@
 import csv
+import datetime
 
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db import IntegrityError
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -100,13 +102,21 @@ def dashboard(request):
             Q(homeroom__icontains=name_query)
         ).order_by("last_name", "first_name")
 
+        # Attach latest classroom scan to each student for receptionist manual search display
+        for student in name_results:
+            student.latest_scan = TeacherScanLog.objects.select_related(
+                "classroom", "scanned_by"
+            ).filter(
+                student=student
+            ).order_by("-scanned_at").first()
+
     open_logs = AttendanceLog.objects.select_related("student").filter(
         check_out_time__isnull=True
     ).order_by("-check_in_time")
 
     checked_in_student_ids = set(open_logs.values_list("student_id", flat=True))
 
-    today = timezone.localdate()
+    today = datetime.date.today()
     daily_session = DailyReceptionSession.objects.filter(session_date=today).first()
     quote_of_the_day = QUOTES[today.toordinal() % len(QUOTES)]
 
@@ -183,7 +193,7 @@ def check_out(request, student_id):
 @user_passes_test(is_receptionist)
 def start_day(request):
     if request.method == "POST":
-        today = timezone.localdate()
+        today = datetime.date.today()
         session, _ = DailyReceptionSession.objects.get_or_create(session_date=today)
 
         if not session.is_active:
@@ -203,7 +213,7 @@ def end_day(request):
         return redirect("dashboard")
 
     now = timezone.now()
-    today = timezone.localdate()
+    today = datetime.date.today()
 
     session = DailyReceptionSession.objects.filter(session_date=today).first()
     if session and session.is_active:
@@ -211,8 +221,8 @@ def end_day(request):
         session.is_active = False
         session.save()
 
+    # Close ALL currently open receptionist logs, not just ones checked in today
     open_logs = AttendanceLog.objects.filter(
-        check_in_time__date=today,
         check_out_time__isnull=True
     ).select_related("student")
 
@@ -229,6 +239,7 @@ def end_day(request):
 
         log.save()
 
+    # Export today's receptionist attendance
     logs = AttendanceLog.objects.filter(
         check_in_time__date=today
     ).select_related("student").order_by("check_in_time")
@@ -257,6 +268,9 @@ def end_day(request):
             log.reason or "",
             log.notes or "",
         ])
+
+    # Clear teacher scans for today so classroom attendance resets for next day
+    TeacherScanLog.objects.filter(scan_date=today).delete()
 
     return response
 
@@ -294,11 +308,10 @@ def teacher_classroom(request, classroom_id):
     if selected_period not in valid_period_values:
         selected_period = "homeroom"
 
-    today = timezone.localdate()
+    today = datetime.date.today()
 
     scanned_logs = TeacherScanLog.objects.select_related("student").filter(
         classroom=classroom,
-        scanned_by=request.user,
         period=selected_period,
         scan_date=today
     ).order_by("student__last_name", "student__first_name")
@@ -332,7 +345,7 @@ def teacher_scan(request, classroom_id):
         return redirect("teacher_home")
 
     query = request.POST.get("query", "").strip()
-    period = request.POST.get("period", "homeroom")
+    period = request.POST.get("period", "homeroom").strip()
 
     valid_period_values = {value for value, _ in PERIOD_CHOICES}
     if period not in valid_period_values:
@@ -358,14 +371,21 @@ def teacher_scan(request, classroom_id):
         check_out_time__isnull=True
     ).exists()
 
-    if receptionist_checkin:
-        TeacherScanLog.objects.get_or_create(
+    if not receptionist_checkin:
+        return redirect(f"/teacher/classroom/{classroom.pk}/?period={period}")
+
+    today = datetime.date.today()
+
+    try:
+        TeacherScanLog.objects.create(
             student=student,
             classroom=classroom,
             scanned_by=request.user,
             period=period,
-            scan_date=timezone.localdate(),
+            scan_date=today,
         )
+    except IntegrityError:
+        pass
 
     return redirect(f"/teacher/classroom/{classroom.pk}/?period={period}")
 

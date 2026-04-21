@@ -47,7 +47,6 @@
             min-height: 100vh;
         }
 
-        /* ── TOP HEADER BAR ── */
         .site-header {
             background: var(--orange);
             padding: 0 32px;
@@ -104,7 +103,6 @@
             background: rgba(255,255,255,0.25);
         }
 
-        /* ── PAGE CONTENT ── */
         .page-wrap {
             flex: 1;
             display: flex;
@@ -115,7 +113,6 @@
             margin: 0 auto;
         }
 
-        /* ── PAGE TITLE STRIPE ── */
         .page-title-row {
             margin-bottom: 24px;
         }
@@ -134,7 +131,6 @@
             margin: 0;
         }
 
-        /* ── SECTION CARDS ── */
         .section-card {
             background: var(--white);
             border: 1.5px solid var(--gray-200);
@@ -154,7 +150,6 @@
             border-bottom: 2px solid var(--gray-100);
         }
 
-        /* ── SEARCH ROW ── */
         .search-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -210,7 +205,6 @@
             color: var(--gray-500);
         }
 
-        /* ── BUTTONS ── */
         button, .btn {
             padding: 10px 18px;
             border: none;
@@ -239,7 +233,6 @@
 
         .clear-link:hover { color: var(--brown); }
 
-        /* ── STUDENT CARD ── */
         .student-card {
             background: var(--white);
             border: 1.5px solid var(--gray-200);
@@ -302,7 +295,6 @@
             color: var(--brown);
         }
 
-        /* ── STATUS BADGES ── */
         .status-in {
             display: inline-flex;
             align-items: center;
@@ -347,7 +339,6 @@
             border-radius: 50%;
         }
 
-        /* ── ACTION BOX ── */
         .action-box {
             margin-top: 18px;
             padding: 18px;
@@ -392,13 +383,11 @@
 
         .action-form input[type="text"]:focus { border-color: var(--orange); }
 
-        /* checkout button variant */
         .btn-checkout {
             background: var(--red);
         }
         .btn-checkout:hover { background: #7a2020; }
 
-        /* ── DETAILS EXPANDER ── */
         details {
             margin-top: 14px;
             border: 1.5px solid var(--gray-200);
@@ -450,7 +439,6 @@
             margin: 14px 0;
         }
 
-        /* ── TABLE ── */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -493,7 +481,6 @@
 
         .muted { color: var(--gray-500); font-style: italic; }
 
-        /* ── SECTION HEADER ROW ── */
         .section-header-row {
             display: flex;
             justify-content: space-between;
@@ -506,7 +493,6 @@
             padding-bottom: 0;
         }
 
-        /* count badge */
         .count-badge {
             background: var(--orange);
             color: var(--white);
@@ -517,7 +503,6 @@
             border-radius: 100px;
         }
 
-        /* ── FOOTER BOARD ── */
         .footer-spacer { flex: 1; min-height: 24px; }
 
         .footer-board {
@@ -534,7 +519,6 @@
             overflow: hidden;
         }
 
-        /* giraffe-spot decorative blobs */
         .footer-board::before {
             content: '';
             position: absolute;
@@ -587,7 +571,6 @@
             max-width: 900px;
         }
 
-        /* ── DAY CONTROLS ── */
         .day-controls {
             width: 264px;
             flex-shrink: 0;
@@ -599,7 +582,6 @@
             overflow: hidden;
         }
 
-        /* subtle spot on the day-controls card */
         .day-controls::after {
             content: '';
             position: absolute;
@@ -664,7 +646,6 @@
         }
         .end-btn:hover { background: rgba(0,0,0,0.40) !important; }
 
-        /* ── RESPONSIVE ── */
         @media (max-width: 1000px) {
             .search-row { grid-template-columns: 1fr; }
             .student-card { flex-direction: column; }
@@ -681,7 +662,6 @@
 </head>
 <body>
 
-<!-- ── BRANDED HEADER ── -->
 <header class="site-header">
     <div class="site-header-brand">
         <div class="brand-dot">JL</div>
@@ -697,7 +677,6 @@
         <p>Scan a student ID or search by name to check students in or out.</p>
     </div>
 
-    <!-- ── SEARCH ROW ── -->
     <div class="search-row">
         <div class="search-box">
             <h2>Scan or Enter Student ID</h2>
@@ -729,7 +708,6 @@
         </div>
     </div>
 
-    <!-- ── NO MATCH ── -->
     {% if id_query and not matched_student %}
         <div class="section-card">
             <h2>No ID Match Found</h2>
@@ -737,7 +715,6 @@
         </div>
     {% endif %}
 
-    <!-- ── MATCHED STUDENT ── -->
     {% if matched_student %}
         <div class="student-card">
             <div class="student-photo">
@@ -820,7 +797,6 @@
         </div>
     {% endif %}
 
-    <!-- ── NAME SEARCH RESULTS ── -->
     {% if name_query %}
         <div class="section-card">
             <div class="section-header-row" style="margin-bottom:16px;">
@@ -833,6 +809,7 @@
                     <th>Name</th>
                     <th>Grade</th>
                     <th>Homeroom</th>
+                    <th>Current Classroom</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
@@ -849,6 +826,13 @@
                     <td><strong>{{ student.first_name }} {{ student.last_name }}</strong></td>
                     <td>{{ student.grade }}</td>
                     <td>{{ student.homeroom }}</td>
+                    <td>
+                        {% if student.latest_scan %}
+                            {{ student.latest_scan.classroom.name }}
+                        {% else %}
+                            <span class="muted">Not scanned yet</span>
+                        {% endif %}
+                    </td>
 
                     {% if student.id in checked_in_student_ids %}
                         <td><span class="status-in">Checked In</span></td>
@@ -873,14 +857,13 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" style="color:var(--gray-500); font-style:italic;">No students found.</td>
+                    <td colspan="8" style="color:var(--gray-500); font-style:italic;">No students found.</td>
                 </tr>
                 {% endfor %}
             </table>
         </div>
     {% endif %}
 
-    <!-- ── CURRENTLY CHECKED IN ── -->
     <div class="section-card">
         <div class="section-header-row" style="margin-bottom:16px;">
             <h2 style="border-bottom:none;padding-bottom:0;margin:0;">Currently Checked In</h2>
@@ -919,7 +902,6 @@
 
     <div class="footer-spacer"></div>
 
-    <!-- ── FOOTER BOARD ── -->
     <div class="footer-board">
         <div class="quote-box">
             <h3>Quote of the Day</h3>
@@ -963,7 +945,7 @@
         </div>
     </div>
 
-</div><!-- /.page-wrap -->
+</div>
 
 <script>
     (function () {
