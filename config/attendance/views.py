@@ -1,5 +1,6 @@
 import csv
 import datetime
+from pathlib import Path
 
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import IntegrityError
@@ -28,6 +29,19 @@ QUOTES = [
     "The work you do today shapes tomorrow.",
     "Order in the environment supports confidence in the child.",
 ]
+
+
+def format_local_dt(dt):
+    if not dt:
+        return ""
+    local_dt = timezone.localtime(dt)
+    hour_12 = local_dt.hour % 12 or 12
+    am_pm = "AM" if local_dt.hour < 12 else "PM"
+    return f"{local_dt.month}/{local_dt.day}/{local_dt.year} {hour_12}:{local_dt.minute:02d} {am_pm}"
+
+
+def get_reports_dir():
+    return Path(__file__).resolve().parent.parent / "daily_reports"
 
 
 def is_receptionist(user):
@@ -102,7 +116,6 @@ def dashboard(request):
             Q(homeroom__icontains=name_query)
         ).order_by("last_name", "first_name")
 
-        # Attach latest classroom scan to each student for receptionist manual search display
         for student in name_results:
             student.latest_scan = TeacherScanLog.objects.select_related(
                 "classroom", "scanned_by"
@@ -216,12 +229,21 @@ def end_day(request):
     today = datetime.date.today()
 
     session = DailyReceptionSession.objects.filter(session_date=today).first()
-    if session and session.is_active:
+    if not session:
+        return redirect("dashboard")
+
+    if session.is_active:
         session.ended_at = now
         session.is_active = False
         session.save()
 
-    # Close ALL currently open receptionist logs, not just ones checked in today
+    session_start = session.started_at
+    session_end = session.ended_at or now
+
+    if not session_start:
+        return redirect("dashboard")
+
+    # Close all currently open receptionist logs
     open_logs = AttendanceLog.objects.filter(
         check_out_time__isnull=True
     ).select_related("student")
@@ -239,13 +261,77 @@ def end_day(request):
 
         log.save()
 
-    # Export today's receptionist attendance
-    logs = AttendanceLog.objects.filter(
-        check_in_time__date=today
+    # ONLY save receptionist logs created during this day session
+    receptionist_logs = AttendanceLog.objects.filter(
+        check_in_time__gte=session_start,
+        check_in_time__lte=session_end,
     ).select_related("student").order_by("check_in_time")
 
+    # ONLY save teacher scans created during this day session
+    teacher_logs = TeacherScanLog.objects.select_related(
+        "student", "classroom", "scanned_by"
+    ).filter(
+        scanned_at__gte=session_start,
+        scanned_at__lte=session_end,
+    ).order_by("scanned_at")
+
+    reports_dir = get_reports_dir()
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    receptionist_csv_path = reports_dir / f"reception_attendance_{today}.csv"
+    teacher_csv_path = reports_dir / f"classroom_scans_{today}.csv"
+
+    with open(receptionist_csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "Student ID",
+            "First Name",
+            "Last Name",
+            "Check In Time",
+            "Check Out Time",
+            "Reason",
+            "Notes",
+        ])
+
+        for log in receptionist_logs:
+            writer.writerow([
+                log.student.student_id,
+                log.student.first_name,
+                log.student.last_name,
+                format_local_dt(log.check_in_time),
+                format_local_dt(log.check_out_time),
+                log.reason or "",
+                log.notes or "",
+            ])
+
+    with open(teacher_csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "Student ID",
+            "First Name",
+            "Last Name",
+            "Classroom",
+            "Period",
+            "Scanned At",
+            "Scanned By",
+        ])
+
+        for log in teacher_logs:
+            writer.writerow([
+                log.student.student_id,
+                log.student.first_name,
+                log.student.last_name,
+                log.classroom.name if log.classroom else "",
+                log.get_period_display() if hasattr(log, "get_period_display") else log.period,
+                format_local_dt(log.scanned_at),
+                log.scanned_by.username if log.scanned_by else "",
+            ])
+
+    # Reset teacher interface for next day after saving report
+    TeacherScanLog.objects.filter(scan_date=today).delete()
+
     response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = f'attachment; filename="attendance_{today}.csv"'
+    response["Content-Disposition"] = f'attachment; filename="reception_attendance_{today}.csv"'
 
     writer = csv.writer(response)
     writer.writerow([
@@ -258,19 +344,16 @@ def end_day(request):
         "Notes",
     ])
 
-    for log in logs:
+    for log in receptionist_logs:
         writer.writerow([
             log.student.student_id,
             log.student.first_name,
             log.student.last_name,
-            log.check_in_time.strftime("%Y-%m-%d %I:%M %p") if log.check_in_time else "",
-            log.check_out_time.strftime("%Y-%m-%d %I:%M %p") if log.check_out_time else "",
+            format_local_dt(log.check_in_time),
+            format_local_dt(log.check_out_time),
             log.reason or "",
             log.notes or "",
         ])
-
-    # Clear teacher scans for today so classroom attendance resets for next day
-    TeacherScanLog.objects.filter(scan_date=today).delete()
 
     return response
 
